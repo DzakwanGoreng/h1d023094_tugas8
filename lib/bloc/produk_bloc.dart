@@ -35,7 +35,7 @@ class ProdukBloc {
       "nama_produk": produk.namaProduk,
       "harga": produk.hargaProduk.toString()
     };
-    var response = await Api().put(apiUrl, body); // Di PDF jsonEncode(body), tapi Api.put mengharapkan map dynamic biasanya, sesuaikan jika error
+    var response = await Api().put(apiUrl, body); 
     var jsonObj = json.decode(response.body);
     return jsonObj['status'];
   }
@@ -44,6 +44,6 @@ class ProdukBloc {
     String apiUrl = ApiUrl.deleteProduk(id!);
     var response = await Api().delete(apiUrl);
     var jsonObj = json.decode(response.body);
-    return (jsonObj as Map<String, dynamic>)['data']; // Sesuaikan dengan response API delete
+    return (jsonObj as Map<String, dynamic>)['data']; 
   }
 }
