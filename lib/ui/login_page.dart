@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:h1d023094_tugas8/bloc/login_bloc.dart';
+import 'package:h1d023094_tugas8/helpers/user_info.dart';
+import 'package:h1d023094_tugas8/ui/produk_page.dart';
 import 'package:h1d023094_tugas8/ui/registrasi_page.dart';
-import 'package:h1d023094_tugas8/ui/produk_page.dart'; // IMPORT ProdukPage supaya bisa navigasi
+import 'package:h1d023094_tugas8/widget/warning_dialog.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
-
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -16,18 +18,9 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordTextboxController = TextEditingController();
 
   @override
-  void dispose() {
-    _emailTextboxController.dispose();
-    _passwordTextboxController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login Dzakwan'),
-      ),
+      appBar: AppBar(title: const Text('Login')),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -37,7 +30,6 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 _emailTextField(),
                 _passwordTextField(),
-                const SizedBox(height: 12),
                 _buttonLogin(),
                 const SizedBox(height: 30),
                 _menuRegistrasi()
@@ -55,9 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       keyboardType: TextInputType.emailAddress,
       controller: _emailTextboxController,
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Email harus diisi';
-        }
+        if (value!.isEmpty) return 'Email harus diisi';
         return null;
       },
     );
@@ -70,9 +60,7 @@ class _LoginPageState extends State<LoginPage> {
       obscureText: true,
       controller: _passwordTextboxController,
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return "Password harus diisi";
-        }
+        if (value!.isEmpty) return "Password harus diisi";
         return null;
       },
     );
@@ -80,38 +68,58 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buttonLogin() {
     return ElevatedButton(
-      child: _isLoading ? const CircularProgressIndicator() : const Text("Login"),
-      onPressed: () async {
-        final validate = _formKey.currentState!.validate();
-        if (!validate) return;
+        child: const Text("Login"),
+        onPressed: () {
+          var validate = _formKey.currentState!.validate();
+          if (validate) {
+            if (!_isLoading) _submit();
+          }
+        });
+  }
 
-        setState(() => _isLoading = true);
-
-        // Simulasi proses login (ganti dengan panggilan API Anda)
-        await Future.delayed(const Duration(seconds: 1));
-
-        setState(() => _isLoading = false);
-
-        // Contoh: setelah berhasil login, pindah ke ProdukPage dan hapus halaman Login dari stack
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ProdukPage()),
-        );
-
-        // Jika Anda ingin menyimpan token / status login, simpan di sini (SharedPreferences, secure_storage, dsb.)
-      },
-    );
+  void _submit() {
+    _formKey.currentState!.save();
+    setState(() {
+      _isLoading = true;
+    });
+    LoginBloc.login(
+            email: _emailTextboxController.text,
+            password: _passwordTextboxController.text)
+        .then((value) async {
+      if (value.code == 200) {
+        await UserInfo().setToken(value.token.toString());
+        await UserInfo().setUserID(int.parse(value.userID.toString()));
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => const ProdukPage()));
+      } else {
+        showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) => const WarningDialog(
+                  description: "Login gagal, silahkan coba lagi",
+                ));
+      }
+    }, onError: (error) {
+      print(error);
+      showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) => const WarningDialog(
+                description: "Login gagal, silahkan coba lagi",
+              ));
+    });
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Widget _menuRegistrasi() {
     return Center(
       child: InkWell(
-        child: const Text(
-          "Registrasi",
-          style: TextStyle(color: Colors.blue),
-        ),
+        child: const Text("Registrasi", style: TextStyle(color: Colors.blue)),
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const RegistrasiPage()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const RegistrasiPage()));
         },
       ),
     );
