@@ -537,14 +537,4 @@ Future logout() async {
 
 ---
 
-
-
-
-```
-
----
-
----
-
-
 **Catatan:** Pastikan backend API sudah berjalan dan dapat diakses dari device/emulator yang digunakan.
